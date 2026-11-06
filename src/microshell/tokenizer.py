@@ -19,9 +19,11 @@ class Token:
     value: str
 
 
-# 长操作符在前，避免 ">>" 被 ">" 抢先匹配
+# 长操作符在前，避免 ">>" 被 ">" 抢先匹配，避免 "2>&1" 被 "2>" 抢先匹配
 _OPERATORS: tuple[tuple[str, TokenType], ...] = (
     ("2>&1", TokenType.REDIRECT),
+    ("2>>", TokenType.REDIRECT),
+    ("2>", TokenType.REDIRECT),
     ("&&", TokenType.AND),
     ("||", TokenType.OR),
     (">>", TokenType.REDIRECT),

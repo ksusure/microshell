@@ -29,3 +29,15 @@ def test_operators():
 def test_unterminated_quote():
     with pytest.raises(ValueError):
         tokenize("cat 'abc")
+
+
+def test_stderr_redirect():
+    ts = tokenize("ls 2> err.txt")
+    assert [t.value for t in ts] == ["ls", "2>", "err.txt"]
+    assert ts[1].type is TokenType.REDIRECT
+
+
+def test_stderr_merge():
+    ts = tokenize("ls 2>&1")
+    assert [t.value for t in ts] == ["ls", "2>&1"]
+    assert ts[1].type is TokenType.REDIRECT

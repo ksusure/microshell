@@ -8,18 +8,19 @@ class FlagGroup:
     unix: str
     powershell: str
     cmd: str
-    ps_lossy: bool = False   # 空翻译且为 True 时警告
+    ps_lossy: bool = False
     cmd_lossy: bool = False
 
 
 @dataclass(frozen=True)
 class CommandMapping:
     unix: str
-    powershell: str
-    cmd: str
+    powershell: str | None
+    cmd: str | None
     flags: tuple[FlagGroup, ...] = ()
-    ps_extra: tuple[str, ...] = ()   # 命令名之后追加的固定参数
+    ps_extra: tuple[str, ...] = ()
     cmd_extra: tuple[str, ...] = ()
+    positional_map: tuple[str, ...] = ()   # 空 = 位置参数按原样拼接
 
 
 def fg(unix: str, ps: str, cmd: str, *, ps_lossy: bool = False, cmd_lossy: bool = False) -> FlagGroup:
@@ -38,7 +39,7 @@ _register(CommandMapping(
     powershell="Get-ChildItem",
     cmd="dir",
     flags=(
-        fg("-l", "", ""),            # Get-ChildItem 默认即列表格式
+        fg("-l", "", ""),
         fg("-a", "-Force", "/a"),
         fg("-la", "-Force", "/a"),
         fg("-al", "-Force", "/a"),
@@ -87,5 +88,19 @@ _register(CommandMapping(
     powershell="New-Item",
     cmd="mkdir",
     ps_extra=("-ItemType", "Directory"),
-    flags=(fg("-p", "-Force", ""),),   # CMD 的 mkdir 默认创建中间目录
+    positional_map=("Path",),       # 所有位置参数都用 -Path 打包
+    flags=(fg("-p", "-Force", ""),),
+))
+
+_register(CommandMapping(
+    unix="grep",
+    powershell="Select-String",
+    cmd="findstr",
+    positional_map=("Pattern", "Path"),   # 第一个位置是 Pattern，其余全部进 Path
+    flags=(
+        fg("-i", "", "/I"),                # Select-String 默认大小写不敏感
+        fg("-n", "-LineNumber", "/N"),
+        fg("-v", "-NotMatch", "/V"),
+        fg("-r", "", "", ps_lossy=True, cmd_lossy=True),
+    ),
 ))
